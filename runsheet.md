@@ -45,7 +45,7 @@ This document tracks the progress and key actions taken during the development o
 *   **Status:** Completed.
 *   **Actions:**
     *   User created a Google Sheet document (e.g., "LocalRankAI MVP Data") with the following tabs: `projects`, `keywords`, `geogrid_runs`, `insights`, `smart_tasks`, `citations`, `reviews`, `review_campaigns`, `predictive_models`, `outcomes`, `reports`, `integrations`.
-*   **Notes:** This is a manual step performed by the user in Google Sheets.
+*   **Notes:** This is a manual step performed by the user in Google Sheets. The `projects` sheet should have the columns: `ID`, `Name`, `Status`, `Domain`, `GbpAccountName`, `Business Name`, `Address`, `Phone`. The `predictive_models` sheet should have the columns: `Project ID`, `Model Version`, `Features`, `Metrics`, `Timestamp`. The `review_campaigns` sheet should have the columns: `Campaign ID`, `Project ID`, `Name`, `Status`, `Start Date`, `End Date`, `Target Audience`, `Message Template`, `Created At`. The `customers` sheet should have the columns: `Customer ID`, `Project ID`, `Name`, `Email`, `Phone`. The `review_requests` sheet should have the columns: `Request ID`, `Campaign ID`, `Customer ID`, `Timestamp`, `Status`. The `reports` sheet should have the columns: `Report ID`, `Project ID`, `Type`, `Date Range`, `Summary`, `Data (JSON)`, `Timestamp`. The `outcomes` sheet should have the columns: `Outcome ID`, `Project ID`, `Type`, `Description`, `Value`, `Timestamp`.
 
 ### 2. Implement Google Sheets API integration for read/write operations from backend.
 *   **Status:** Completed (Utility file created).
@@ -93,16 +93,18 @@ This document tracks the progress and key actions taken during the development o
 *   **Notes:** All primary external API integrations for the Aggregation Service are now in place.
 
 ### 5. Implement `Insights Engine`.
-*   **Status:** Completed.
+*   **Status:** In Progress.
 *   **Actions:**
     *   Installed `openai` package in `apps/web`: `pnpm add openai`.
     *   Created utility file: `/Volumes/Teja MAC Home Folder/Mac Home/Documents/1 Projects/DMG-LOCAL-SEO/apps/web/lib/openAi.js`.
     *   File contains `generateAISummary` function.
     *   Provided instructions for `OPENAI_API_KEY` environment variable.
     *   Created service file: `/Volumes/Teja MAC Home Folder/Mac Home/Documents/1 Projects/DMG-LOCAL-SEO/apps/web/services/insights.js`.
-    *   File contains placeholder functions for `generateRankDeltasInsight`, `generateCompetitorOvertakesInsight`, `generateGbpChangesInsight`, and `generateAndStoreInsights`.
-    *   Provided instructions for `GOOGLE_SHEET_ID` environment variable and example API route usage.
-*   **Notes:** The core logic for aggregating data and generating specific insights (rank deltas, competitor overtakes, GBP changes) is outlined with placeholders, ready for detailed implementation.
+    *   Implemented `generateRankDeltasInsight` to compare keyword ranks over time.
+    *   Implemented `generateCompetitorOvertakesInsight` to identify when competitors overtake user ranks.
+    *   Implemented `generateGbpChangesInsight` to track new reviews on Google Business Profile.
+    *   The `generateAndStoreInsights` function orchestrates the other insight functions and stores the results in Google Sheets.
+*   **Notes:** The Insights Engine is now capable of generating insights based on rank changes, competitor performance, and Google Business Profile activity.
 
 ### 6. Implement `Smart Task Engine`.
 *   **Status:** Completed.
@@ -117,30 +119,37 @@ This document tracks the progress and key actions taken during the development o
 *   **Actions:**
     *   Created service file: `/Volumes/Teja MAC Home Folder/Mac Home/Documents/1 Projects/DMG-LOCAL-SEO/apps/web/services/predictiveModeling.js`. 
     *   File contains `predictVisibilityUplift` function with simplified MVP logic.
+    *   The `predictVisibilityUplift` function now stores predictions in the `predictive_models` Google Sheet.
     *   Provided instructions for example API route usage.
-*   **Notes:** The PME is a simplified MVP implementation, using basic heuristics for prediction rather than a trained ML model.
+*   **Notes:** The PME is a simplified MVP implementation, using basic heuristics for prediction rather than a trained ML model, and now stores its predictions.
 
 ### 8. Implement `Citation Audit Engine`.
 *   **Status:** Completed.
 *   **Actions:**
     *   Created service file: `/Volumes/Teja MAC Home Folder/Mac Home/Documents/1 Projects/DMG-LOCAL-SEO/apps/web/services/citationAudit.js`.
     *   File contains `runCitationAudit` function with simulated audit logic.
+    *   The `runCitationAudit` function now fetches NAP details from the `projects` sheet and stores findings in the `citations` Google Sheet.
     *   Provided instructions for example API route usage.
-*   **Notes:** The citation audit logic is a basic MVP simulation, storing findings in the `citations` Google Sheet.
+*   **Notes:** The citation audit logic is a basic MVP simulation, now using project-specific NAP details and storing findings.
 
 ### 9. Implement `Review Campaign Engine (RCE)`.
 *   **Status:** Completed.
 *   **Actions:**
     *   Created service file: `/Volumes/Teja MAC Home Folder/Mac Home/Documents/1 Projects/DMG-LOCAL-SEO/apps/web/services/reviewCampaign.js`.
-    *   File contains placeholder functions for `createReviewCampaign`, `sendReviewRequest`, `trackReviewResponse`, and `analyzeReviewSentiment`.
-*   **Notes:** The RCE is a basic MVP implementation with placeholder logic for managing review campaigns.
+    *   Implemented `createReviewCampaign` to create new review campaigns and store them in the `review_campaigns` sheet.
+    *   Implemented `sendReviewRequest` to simulate sending review requests to customers and record them in the `review_requests` sheet.
+    *   Implemented `trackReviewResponse` to update the status of review requests and store new reviews in the `reviews` sheet.
+    *   Implemented `analyzeReviewSentiment` to use OpenAI to analyze the sentiment of review text.
+*   **Notes:** The RCE is now capable of managing review campaigns, sending requests, tracking responses, and analyzing sentiment.
 
 ### 10. Implement `Reporting/Outcome Service`.
 *   **Status:** Completed.
 *   **Actions:**
     *   Created service file: `/Volumes/Teja MAC Home Folder/Mac Home/Documents/1 Projects/DMG-LOCAL-SEO/apps/web/services/reporting.js`.
-    *   File contains placeholder functions for `generatePerformanceReport`, `trackOutcome`, and `getHistoricalReports`.
-*   **Notes:** The Reporting/Outcome Service is a basic MVP implementation with placeholder logic for generating reports and tracking outcomes.
+    *   Implemented `generatePerformanceReport` to fetch and aggregate data from various sources and store it in the `reports` sheet.
+    *   Implemented `trackOutcome` to store specific outcomes or achievements in the `outcomes` sheet.
+    *   Implemented `getHistoricalReports` to retrieve previously generated reports from the `reports` sheet.
+*   **Notes:** The Reporting/Outcome Service is now capable of generating performance reports, tracking outcomes, and retrieving historical reports.
 
 ### 11. Implement `Scheduler & Cron Jobs`.
 *   **Status:** Completed.
