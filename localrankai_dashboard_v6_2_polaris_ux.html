@@ -1,0 +1,833 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>LocalRankAI — v6.2 Polaris UX (Sticky + Motion)</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              primary: '#2C6ECB',  // Polaris action blue
+              hover:   '#1F5197',
+              light:   '#EBF5FA',
+              lighter: '#F6FAFD',
+              border:  '#E3EAF2',
+              text:    '#0F172A'
+            },
+            p: {
+              muted:   '#64748B',
+              success: '#166534',
+              warn:    '#B45309',
+              critical:'#B91C1C'
+            }
+          },
+          boxShadow: {
+            subtle: '0 1px 2px rgba(15,23,42,0.06)',
+            card:   '0 8px 24px rgba(15,23,42,0.06)'
+          },
+          keyframes: {
+            fadeSlideIn: { '0%':{opacity:0, transform:'translateX(10px)'}, '100%':{opacity:1, transform:'translateX(0)'} },
+            widthGrow: { '0%':{width:'0%'}, '100%':{width:'100%'} },
+            cardIn: { '0%':{opacity:0, transform:'translateY(6px)'}, '100%':{opacity:1, transform:'translateY(0)'} }
+          },
+          animation: {
+            fadeSlideIn: 'fadeSlideIn .3s cubic-bezier(0.32, 0.72, 0, 1) both',
+            widthGrow: 'widthGrow 0.8s ease-out forwards',
+            cardIn: 'cardIn .25s ease-out both'
+          },
+          fontFamily: { inter: ['Inter','ui-sans-serif','system-ui','Segoe UI','Roboto','Arial','sans-serif'] }
+        }
+      }
+    }
+  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{ --sidebar-w: 264px; --topbar-h: 56px; }
+    body { background:#F6FAFD; }
+    .polaris-page { padding: 0 24px 24px 24px; } @media (min-width:1024px){ .polaris-page{padding:0 32px 32px 32px;} }
+    .card { background:#fff; border:1px solid #E3EAF2; border-radius:.5rem; box-shadow:0 1px 2px rgba(15,23,42,.06); transition: box-shadow .2s ease, transform .2s ease; }
+    .card:hover { box-shadow:0 8px 24px rgba(15,23,42,.06); transform: translateY(-1px); }
+    .btn { padding:.5rem .75rem; border-radius:.375rem; border:1px solid; font-size:.875rem; transition: background .15s ease, border-color .15s ease, color .15s ease; }
+    .btn-primary { background:#2C6ECB; color:#fff; border-color:#2C6ECB; }
+    .btn-primary:hover { background:#1F5197; border-color:#1F5197; }
+    .btn-ghost { background:#fff; color:#0F172A; border-color:#E3EAF2; }
+    .btn-ghost:hover { background:#F6FAFD; }
+    .nav-active { background:#fff; border:1px solid #E3EAF2; }
+    .tab { opacity:0; pointer-events:none; position: absolute; top: 0; left: 0; width: 100%; }
+    .tab.active { opacity:1; pointer-events:auto; animation: fadeSlideIn .3s cubic-bezier(0.32, 0.72, 0, 1) both; position: static; }
+    /* Sticky layout */
+    .layout {
+      display: grid;
+      grid-template-columns: var(--sidebar-w) 1fr;
+      grid-template-rows: var(--topbar-h) 1fr;
+      grid-template-areas: 'sidebar topbar' 'sidebar main';
+      min-height: 100dvh;
+    }
+    .sidebar {
+      grid-area: sidebar;
+      position: sticky;
+      top: 0;
+      align-self: start;
+      height: 100dvh;
+      overflow: auto;
+      background: #F6FAFD;
+      border-right: 1px solid #E3EAF2;
+      padding: 1.5rem;
+    }
+    .topbar {
+      grid-area: topbar;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      backdrop-filter: blur(6px);
+      background: rgba(255,255,255,0.95);
+      border-bottom: 1px solid #E3EAF2;
+    }
+    .main {
+      grid-area: main;
+      padding-top: var(--topbar-h); /* Offset for sticky topbar */
+    }
+    /* Stagger children inside .stagger container */
+    .stagger > * { animation: cardIn .25s ease-out both; }
+    .stagger > *:nth-child(1){ animation-delay: .02s; }
+    .stagger > *:nth-child(2){ animation-delay: .05s; }
+    .stagger > *:nth-child(3){ animation-delay: .08s; }
+    .stagger > *:nth-child(4){ animation-delay: .11s; }
+  </style>
+</head>
+<body class="text-brand-text font-inter">
+
+  <div class="layout">
+
+    <!-- Sidebar (sticky) -->
+    <aside class="sidebar">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-5 h-5 rounded-md bg-gradient-to-br from-[#7CC2F1] to-[#2C6ECB]"></div>
+        <div class="text-[#1F5197] font-bold tracking-tight">LocalRankAI</div>
+      </div>
+
+      <div class="text-xs uppercase tracking-wide text-p-muted mb-2">Main</div>
+      <nav id="nav" class="flex flex-col gap-1">
+        <a href="#" data-target="dashboard" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white hover:border hover:border-brand-border"><span class="w-2 h-2 rounded-full bg-brand-border"></span>Dashboard</a>
+        <a href="#" data-target="keywords"  class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white hover:border hover:border-brand-border"><span class="w-2 h-2 rounded-full bg-brand-border"></span>Keywords</a>
+        <a href="#" data-target="insights"  class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white hover:border hover:border-brand-border"><span class="w-2 h-2 rounded-full bg-brand-border"></span>Insights</a>
+        <a href="#" data-target="citations" class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white hover:border hover:border-brand-border"><span class="w-2 h-2 rounded-full bg-brand-border"></span>Citations</a>
+        <a href="#" data-target="reviews"   class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white hover:border hover:border-brand-border"><span class="w-2 h-2 rounded-full bg-brand-border"></span>Reviews</a>
+        <a href="#" data-target="tasks"     class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white hover:border hover:border-brand-border"><span class="w-2 h-2 rounded-full bg-brand-border"></span>Tasks</a>
+        <a href="#" data-target="reports"   class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white hover:border hover:border-brand-border"><span class="w-2 h-2 rounded-full bg-brand-border"></span>Reports</a>
+        <a href="#" data-target="settings"  class="nav-link flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-white hover:border hover:border-brand-border"><span class="w-2 h-2 rounded-full bg-brand-border"></span>Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Topbar (sticky) -->
+    <header class="topbar flex items-center justify-between px-6 h-[var(--topbar-h)] shadow-subtle">
+      <div class="flex items-center gap-3">
+        <div class="w-5 h-5 rounded-md bg-gradient-to-br from-[#7CC2F1] to-[#2C6ECB]"></div>
+        <div class="text-[#1F5197] font-bold">LocalRankAI</div>
+      </div>
+      <div class="flex items-center gap-4 text-p-muted">
+        <span class="text-sm">Search…</span>
+        <span>🔔</span>
+        <div class="w-7 h-7 rounded-full bg-[#DCEFFD] border border-brand-border"></div>
+      </div>
+    </header>
+
+    <!-- Main content area -->
+    <main class="main">
+
+      <!-- DASHBOARD -->
+      <section id="dashboard" class="tab active polaris-page space-y-6">
+        <div class="flex items-center justify-between">
+          <h1 class="text-lg font-semibold tracking-tight">Dashboard</h1>
+          <button class="btn btn-primary">New Project</button>
+        </div>
+
+        <!-- KPI row -->
+        <div class="grid gap-6 lg:grid-cols-4 stagger">
+          <div class="card p-6">
+            <div class="text-xs uppercase tracking-wide text-p-muted mb-1.5">Average Rank</div>
+            <div class="flex items-center gap-2 text-2xl font-bold">
+              <span class="kpi" data-kpi="12.4">12.4</span>
+              <span class="text-xs border border-green-200 text-green-800 bg-green-50 rounded-full px-2 py-0.5">+1.2</span>
+            </div>
+            <div class="mt-2 h-1.5 rounded bg-brand-border">
+              <div class="h-1.5 rounded bg-[#2C6ECB] animate-widthGrow" style="width:75%"></div>
+            </div>
+          </div>
+          <div class="card p-6">
+            <div class="text-xs uppercase tracking-wide text-p-muted mb-1.5">Visibility</div>
+            <div class="flex items-center gap-2 text-2xl font-bold">
+              <span class="kpi" data-kpi="34" data-suffix="%">0%</span>
+              <span class="text-xs border border-green-200 text-green-800 bg-green-50 rounded-full px-2 py-0.5">+4%</span>
+            </div>
+            <div class="mt-2 h-1.5 rounded bg-brand-border">
+              <div class="h-1.5 rounded bg-[#2C6ECB] animate-widthGrow" style="width:34%"></div>
+            </div>
+          </div>
+          <div class="card p-6">
+            <div class="text-xs uppercase tracking-wide text-p-muted mb-1.5">Reviews (30d)</div>
+            <div class="flex items-center gap-2 text-2xl font-bold">
+              <span class="kpi" data-kpi="18">0</span>
+              <span class="text-xs border border-green-200 text-green-800 bg-green-50 rounded-full px-2 py-0.5">+5</span>
+            </div>
+            <div class="mt-2 h-1.5 rounded bg-brand-border">
+              <div class="h-1.5 rounded bg-[#2C6ECB] animate-widthGrow" style="width:60%"></div>
+            </div>
+          </div>
+          <div class="card p-6">
+            <div class="text-xs uppercase tracking-wide text-p-muted mb-1.5">Directories Synced</div>
+            <div class="text-2xl font-bold"><span class="kpi" data-kpi="42">0</span> / 50</div>
+            <div class="mt-2 h-1.5 rounded bg-brand-border">
+              <div class="h-1.5 rounded bg-[#2C6ECB] animate-widthGrow" style="width:84%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[2fr,1fr] stagger">
+          <!-- GeoGrid -->
+          <div class="card p-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="font-semibold">GeoGrid — “plumber werribee”</div>
+              <span class="text-[11px] border border-brand-border bg-brand-light rounded-full px-2 py-0.5 text-[#1F5197]">Compare: Last 7d vs Prev 7d</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 mb-3 text-sm">
+              <label class="flex items-center gap-2">Grid size
+                <select id="gridSize" class="border border-brand-border rounded-md px-2 py-1">
+                  <option>9×9</option><option selected>25×25</option><option>49×49</option>
+                </select>
+              </label>
+              <label class="flex items-center gap-2">Radius (km)
+                <input id="radiusKm" type="range" min="1" max="50" value="10" oninput="radiusOut.textContent=this.value+'km'"/>
+                <span id="radiusOut" class="text-[11px] border border-brand-border rounded-full px-2 py-0.5 text-p-muted">10km</span>
+              </label>
+              <label class="flex items-center gap-2">
+                <input id="overlayToggle" type="checkbox" checked class="accent-[#2C6ECB]"> Competitor overlay
+              </label>
+              <label class="flex items-center gap-2">Compare date
+                <select id="compareDate" class="border border-brand-border rounded-md px-2 py-1">
+                  <option>This week</option><option>Last week</option><option>30 days ago</option>
+                </select>
+              </label>
+              <button onclick="fakeRunGrid()" class="btn btn-ghost">Run grid</button>
+            </div>
+            <div id="gridCanvas" class="h-80 rounded-lg border border-dashed border-brand-border grid place-items-center text-p-muted text-sm bg-white">
+              <div class="w-3/4">
+                <div class="h-32 rounded bg-gradient-to-r from-[#DCEFFD] to-[#EBF5FA]"></div>
+                <div class="mt-3 text-center text-xs text-p-muted">Map / Heat Grid Placeholder</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Predictive What-If -->
+          <div class="card p-6">
+            <div class="font-semibold mb-3">Predictive What-If</div>
+            <div class="space-y-3">
+              <label class="block text-sm">
+                <span class="text-p-muted">Action</span>
+                <select id="whatIfAction" class="mt-1 border border-brand-border rounded-md px-2 py-2 w-full">
+                  <option value="citation_fix">Fix citation mismatch (TrueLocal)</option>
+                  <option value="add_category">Add GBP secondary category</option>
+                  <option value="review_rate">Increase review rate to 8/mo</option>
+                </select>
+              </label>
+              <button onclick="runPredict()" class="btn btn-primary">Estimate Uplift</button>
+              <div id="predictChart" class="h-40 rounded-lg border border-dashed border-brand-border grid place-items-center text-p-muted text-sm bg-white">Predicted visibility uplift: —</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-[2fr,1fr] stagger">
+          <div class="card p-6">
+            <div class="font-semibold mb-3">Keyword Movement</div>
+            <div class="h-40 rounded-lg border border-dashed border-brand-border grid place-items-center text-p-muted text-sm bg-white">Bar Chart Placeholder</div>
+          </div>
+          <div class="card p-6 space-y-3">
+            <div class="font-semibold">AI Insights</div>
+            <div class="flex items-start gap-3 p-3 border border-brand-border rounded-lg transition hover:shadow-subtle">
+              <span class="text-[11px] px-2 py-0.5 border border-[#B4E0FA] bg-[#EBF5FA] text-[#1F5197] rounded-full">Ranking</span>
+              <div class="text-sm">
+                <div class="font-semibold mb-1">Top keywords improved 8 positions this week</div>
+                <div class="text-p-muted">Focus on “blocked drain melbourne” — opportunity to break into Top 10.</div>
+              </div>
+              <div class="ml-auto flex gap-2">
+                <button onclick="createTask()" class="btn btn-primary">Create Task</button>
+                <button class="btn btn-ghost">View</button>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3 border border-brand-border rounded-lg transition hover:shadow-subtle">
+              <span class="text-[11px] px-2 py-0.5 border border-green-200 bg-green-50 text-green-900 rounded-full">GBP</span>
+              <div class="text-sm">
+                <div class="font-semibold mb-1">Missing GBP category: “Emergency Plumbing”</div>
+                <div class="text-p-muted">Add the category to improve relevance for urgent searches.</div>
+              </div>
+              <div class="ml-auto">
+                <button onclick="createTask('Add GBP category: Emergency Plumbing')" class="btn btn-ghost">Create Task</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center text-p-muted text-xs mt-8">© 2025 LocalRankAI — All Rights Reserved</div>
+      </section>
+
+      <!-- KEYWORDS -->
+      <section id="keywords" class="tab polaris-page space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Keywords</h2>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost">Import CSV</button>
+            <button class="btn btn-primary">Add Keyword</button>
+          </div>
+        </div>
+        <div class="card p-6">
+          <div class="flex flex-wrap gap-2 mb-4 text-sm">
+            <select class="border border-brand-border rounded-md px-2 py-2"><option>City: All</option><option>Werribee</option><option>Melton</option></select>
+            <select class="border border-brand-border rounded-md px-2 py-2"><option>Engine: Google</option><option>Bing</option></select>
+            <select class="border border-brand-border rounded-md px-2 py-2"><option>Grid: 7×7</option><option>9×9</option></select>
+            <input class="border border-brand-border rounded-md px-3 py-2" placeholder="Tag: Plumbing"/>
+            <button class="btn btn-ghost">Reset</button>
+            <button class="btn btn-primary">Apply</button>
+          </div>
+          <div class="overflow-hidden rounded-lg border border-brand-border">
+            <table class="w-full text-sm">
+              <thead class="bg-brand-light text-[#1F5197]">
+                <tr>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Keyword</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Avg Rank</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Best Rank</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Grid</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Visibility</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Δ</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Last Run</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">plumber werribee</td><td class="p-3 border-b border-brand-border">12.4</td><td class="p-3 border-b border-brand-border">5</td><td class="p-3 border-b border-brand-border">7×7</td><td class="p-3 border-b border-brand-border">68%</td><td class="p-3 border-b border-brand-border text-green-700">+2</td><td class="p-3 border-b border-brand-border">2025-11-05</td>
+                </tr>
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">blocked drain melbourne</td><td class="p-3 border-b border-brand-border">18.2</td><td class="p-3 border-b border-brand-border">8</td><td class="p-3 border-b border-brand-border">7×7</td><td class="p-3 border-b border-brand-border">51%</td><td class="p-3 border-b border-brand-border text-green-700">+3</td><td class="p-3 border-b border-brand-border">2025-11-05</td>
+                </tr>
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">hot water repairs</td><td class="p-3 border-b border-brand-border">22.1</td><td class="p-3 border-b border-brand-border">10</td><td class="p-3 border-b border-brand-border">7×7</td><td class="p-3 border-b border-brand-border">44%</td><td class="p-3 border-b border-brand-border text-green-700">+1</td><td class="p-3 border-b border-brand-border">2025-11-05</td>
+                </tr>
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">emergency plumber melton</td><td class="p-3 border-b border-brand-border">27.9</td><td class="p-3 border-b border-brand-border">11</td><td class="p-3 border-b border-brand-border">7×7</td><td class="p-3 border-b border-brand-border">32%</td><td class="p-3 border-b border-brand-border text-red-700">−2</td><td class="p-3 border-b border-brand-border">2025-11-05</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- INSIGHTS -->
+      <section id="insights" class="tab polaris-page space-y-6">
+        <h2 class="text-lg font-semibold">Insights</h2>
+        <div class="card p-6 space-y-3">
+          <div class="flex gap-2 mb-2">
+            <button class="btn btn-primary">All</button>
+            <button class="btn btn-ghost">Ranking</button>
+            <button class="btn btn-ghost">GBP</button>
+            <button class="btn btn-ghost">Directory</button>
+            <button class="btn btn-ghost">Reviews</button>
+          </div>
+          <div class="flex items-start gap-3 p-3 border border-brand-border rounded-lg transition hover:shadow-subtle">
+            <span class="text-[11px] px-2 py-0.5 border border-[#B4E0FA] bg-[#EBF5FA] text-[#1F5197] rounded-full">Predictive</span>
+            <div class="text-sm">
+              <div class="font-semibold mb-1">Fixing 2 NAP mismatches may yield <b>+6–9%</b> visibility</div>
+              <div class="text-p-muted">Confidence: 0.82 • Drivers: TrueLocal, Hotfrog AU</div>
+            </div>
+            <div class="ml-auto">
+              <button onclick="createTask('Fix NAP mismatches (TrueLocal, Hotfrog)')" class="btn btn-primary">Create Tasks</button>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-3 border border-brand-border rounded-lg transition hover:shadow-subtle">
+            <span class="text-[11px] px-2 py-0.5 border border-amber-200 bg-amber-50 text-amber-900 rounded-full">Directory</span>
+            <div class="text-sm">
+              <div class="font-semibold mb-1">3 listings missing hours • <b>Opportunity Score: 0.74</b></div>
+              <div class="text-p-muted">Prioritise Yellow Pages AU and TrueLocal.</div>
+            </div>
+            <div class="ml-auto">
+              <button onclick="createTask('Complete hours on top directories')" class="btn btn-ghost">Create Task</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CITATIONS -->
+      <section id="citations" class="tab polaris-page space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Citations Audit</h2>
+          <div class="flex gap-2">
+            <button onclick="alert('Queued weekly audit')" class="btn btn-ghost">Run Audit</button>
+            <button class="btn btn-primary">Export CSV</button>
+          </div>
+        </div>
+        <div class="card p-6">
+          <div class="flex flex-wrap gap-2 mb-4 text-sm">
+            <select class="border border-brand-border rounded-md px-2 py-2"><option>Status: All</option><option>OK</option><option>Mismatch</option><option>Duplicate</option></select>
+            <select class="border border-brand-border rounded-md px-2 py-2"><option>Directory: All</option><option>Yellow Pages AU</option><option>TrueLocal</option><option>Hotfrog AU</option></select>
+            <button class="btn btn-ghost">Reset</button>
+          </div>
+          <div class="overflow-hidden rounded-lg border border-brand-border">
+            <table class="w-full text-sm">
+              <thead class="bg-brand-light text-[#1F5197]">
+                <tr>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Directory</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">URL</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">NAP</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Errors</th>
+                  <th class="text-left font-semibold p-3 border-brand-border border-b">Duplicate</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Competitor has</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Opp. Score</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">Yellow Pages AU</td>
+                  <td class="p-3 border-b border-brand-border"><a href="#" class="text-brand-primary underline">/royal-plumbing</a></td>
+                  <td class="p-3 border-b border-brand-border">Name ✓, Address ✓, Phone ✓</td>
+                  <td class="p-3 border-b border-brand-border">—</td>
+                  <td class="p-3 border-b border-brand-border">No</td>
+                  <td class="p-3 border-b border-brand-border">Yes (4)</td>
+                  <td class="p-3 border-b border-brand-border">0.81</td>
+                  <td class="p-3 border-b border-brand-border"><button onclick="addTasks(['Claim YP enhancements'])" class="btn btn-ghost">Add to Tasks</button></td>
+                </tr>
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">TrueLocal</td>
+                  <td class="p-3 border-b border-brand-border"><a href="#" class="text-brand-primary underline">/royal-plumbing-werribee</a></td>
+                  <td class="p-3 border-b border-brand-border">Name ✓, Address ✗ (Old postcode), Phone ✓</td>
+                  <td class="p-3 border-b border-brand-border"><span class="text-red-700 border border-red-200 bg-red-50 rounded-full px-2 py-0.5 text-xs">Address mismatch</span></td>
+                  <td class="p-3 border-b border-brand-border">No</td>
+                  <td class="p-3 border-b border-brand-border">Yes (3)</td>
+                  <td class="p-3 border-b border-brand-border">0.76</td>
+                  <td class="p-3 border-b border-brand-border"><button onclick="addTasks(['Fix TrueLocal address'])" class="btn btn-ghost">Add to Tasks</button></td>
+                </tr>
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">Hotfrog AU</td>
+                  <td class="p-3 border-b border-brand-border"><a href="#" class="text-brand-primary underline">/royal-plumbing-melbourne</a></td>
+                  <td class="p-3 border-b border-brand-border">Name ✓, Address ✓, Phone ✓</td>
+                  <td class="p-3 border-b border-brand-border">—</td>
+                  <td class="p-3 border-b border-brand-border"><span class="text-amber-700 border border-amber-200 bg-amber-50 rounded-full px-2 py-0.5 text-xs">Possible duplicate</span></td>
+                  <td class="p-3 border-b border-brand-border">No</td>
+                  <td class="p-3 border-b border-brand-border">0.58</td>
+                  <td class="p-3 border-b border-brand-border"><button onclick="addTasks(['Review Hotfrog duplicate'])" class="btn btn-ghost">Add to Tasks</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- REVIEWS -->
+      <section id="reviews" class="tab polaris-page space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Reviews</h2>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost">Import CSV</button>
+            <button onclick="openCampaignModal()" class="btn btn-primary">New Campaign</button>
+          </div>
+        </div>
+        <div class="grid gap-6 lg:grid-cols-[1.3fr,1fr]">
+          <div class="card p-6">
+            <div class="font-semibold mb-3">Recent Reviews</div>
+            <div class="overflow-hidden rounded-lg border border-brand-border">
+              <table class="w-full text-sm">
+                <thead class="bg-brand-light text-[#1F5197]">
+                  <tr>
+                    <th class="text-left font-semibold p-3 border-b border-brand-border">Source</th>
+                    <th class="text-left font-semibold p-3 border-b border-brand-border">Rating</th>
+                    <th class="text-left font-semibold p-3 border-b border-brand-border">Text</th>
+                    <th class="text-left font-semibold p-3 border-b border-brand-border">Date</th>
+                    <th class="text-left font-semibold p-3 border-b border-brand-border">Responded</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="hover:bg-brand-light/60"><td class="p-3 border-b border-brand-border">Google</td><td class="p-3 border-b border-brand-border">★★★★★</td><td class="p-3 border-b border-brand-border">Fast and professional service!</td><td class="p-3 border-b border-brand-border">2025-11-03</td><td class="p-3 border-b border-brand-border">Yes</td></tr>
+                  <tr class="hover:bg-brand-light/60"><td class="p-3 border-b border-brand-border">Google</td><td class="p-3 border-b border-brand-border">★★★★☆</td><td class="p-3 border-b border-brand-border">Good job, arrived late.</td><td class="p-3 border-b border-brand-border">2025-11-02</td><td class="p-3 border-b border-brand-border">No</td></tr>
+                  <tr class="hover:bg-brand-light/60"><td class="p-3 border-b border-brand-border">Facebook</td><td class="p-3 border-b border-brand-border">★★★★★</td><td class="p-3 border-b border-brand-border">Loved the quick fix.</td><td class="p-3 border-b border-brand-border">2025-11-01</td><td class="p-3 border-b border-brand-border">No</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card p-6">
+            <div class="font-semibold mb-3">Campaign Performance</div>
+            <div class="space-y-3">
+              <div class="flex items-center gap-3 p-3 border border-brand-border rounded-lg transition hover:shadow-subtle">
+                <span class="w-2 h-2 rounded-full bg-green-600"></span>
+                <div class="text-sm">
+                  <div class="font-semibold">October Follow-ups</div>
+                  <div class="text-p-muted text-xs">Sent 120 • Delivered 116 • Clicked 34 • Reviews 18</div>
+                </div>
+                <div class="ml-auto"><button class="btn btn-ghost">View</button></div>
+              </div>
+              <div class="flex items-center gap-3 p-3 border border-brand-border rounded-lg transition hover:shadow-subtle">
+                <span class="w-2 h-2 rounded-full bg-amber-600"></span>
+                <div class="text-sm">
+                  <div class="font-semibold">November Drip (Week 1)</div>
+                  <div class="text-p-muted text-xs">Sent 40 • Delivered 39 • Clicked 12 • Reviews 5</div>
+                </div>
+                <div class="ml-auto"><button class="btn btn-ghost">Pause</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Composer -->
+        <div id="campaignComposer" class="hidden card p-6">
+          <div class="font-semibold mb-3">Create Review Campaign</div>
+          <div class="grid gap-4 lg:grid-cols-2">
+            <label class="block text-sm"><span class="text-p-muted">Channel</span>
+              <select id="campChannel" class="mt-1 w-full border border-brand-border rounded-md px-2 py-2"><option>email</option><option>sms</option></select>
+            </label>
+            <label class="block text-sm"><span class="text-p-muted">Template</span>
+              <select id="campTpl" class="mt-1 w-full border border-brand-border rounded-md px-2 py-2"><option>Simple request</option><option>Post-service thank you</option></select>
+            </label>
+          </div>
+          <label class="block text-sm mt-3"><span class="text-p-muted">Audience (Sheet range or CSV)</span>
+            <input id="campAudience" class="mt-1 w-full border border-brand-border rounded-md px-3 py-2" placeholder="Sheet: Customers!A2:D or upload.csv"/>
+          </label>
+          <div class="grid gap-4 lg:grid-cols-2 mt-3">
+            <label class="block text-sm"><span class="text-p-muted">Cadence</span>
+              <select id="campCadence" class="mt-1 w-full border border-brand-border rounded-md px-2 py-2"><option>One-shot</option><option>Drip N, N+3, N+7</option></select>
+            </label>
+            <label class="block text-sm"><span class="text-p-muted">Send Time</span>
+              <input id="campTime" class="mt-1 w-full border border-brand-border rounded-md px-3 py-2" placeholder="Mondays 10:00"/>
+            </label>
+          </div>
+          <div class="flex gap-2 mt-4">
+            <button onclick="cancelCampaign()" class="btn btn-ghost">Cancel</button>
+            <button onclick="saveCampaign()" class="btn btn-primary">Save & Queue</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- TASKS -->
+      <section id="tasks" class="tab polaris-page space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Smart Tasks</h2>
+          <button onclick="generateWeeklyTasks()" class="btn btn-ghost">Generate Weekly Tasks</button>
+        </div>
+        <div class="card p-6">
+          <div class="overflow-hidden rounded-lg border border-brand-border">
+            <table class="w-full text-sm">
+              <thead class="bg-brand-light text-[#1F5197]">
+                <tr>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Task</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Why now</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Impact</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Effort</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Due</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Status</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="taskTable">
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">Add GBP category: Emergency Plumber</td>
+                  <td class="p-3 border-b border-brand-border">Comp overtakes for urgent queries</td>
+                  <td class="p-3 border-b border-brand-border">High</td>
+                  <td class="p-3 border-b border-brand-border">Low</td>
+                  <td class="p-3 border-b border-brand-border">2025-11-12</td>
+                  <td class="p-3 border-b border-brand-border">Open</td>
+                  <td class="p-3 border-b border-brand-border"><button onclick="markDone(this)" class="btn btn-ghost">Complete</button></td>
+                </tr>
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">Fix NAP mismatch on TrueLocal</td>
+                  <td class="p-3 border-b border-brand-border">Address mismatch reduces trust</td>
+                  <td class="p-3 border-b border-brand-border">Medium</td>
+                  <td class="p-3 border-b border-brand-border">Low</td>
+                  <td class="p-3 border-b border-brand-border">2025-11-10</td>
+                  <td class="p-3 border-b border-brand-border">Open</td>
+                  <td class="p-3 border-b border-brand-border"><button onclick="markDone(this)" class="btn btn-ghost">Complete</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="reports" class="tab polaris-page space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-lg font-semibold">Reports</h2>
+          <div class="flex gap-2">
+            <button class="btn btn-ghost">New Template</button>
+            <button class="btn btn-primary">Schedule Report</button>
+          </div>
+        </div>
+        <div class="grid gap-6 lg:grid-cols-[1.3fr,1fr]">
+          <div class="card p-6">
+            <div class="font-semibold mb-3">White-Label Branding</div>
+            <div class="grid gap-4 lg:grid-cols-2">
+              <label class="block text-sm"><span class="text-p-muted">Brand Name</span><input class="mt-1 w-full border border-brand-border rounded-md px-3 py-2" value="Digital Marketing Genius"></label>
+              <label class="block text-sm"><span class="text-p-muted">Primary Color</span><input class="mt-1 w-full border border-brand-border rounded-md px-3 py-2" value="#2C6ECB"></label>
+            </div>
+            <div class="grid gap-4 lg:grid-cols-2 mt-3">
+              <label class="block text-sm"><span class="text-p-muted">Logo URL</span><input class="mt-1 w-full border border-brand-border rounded-md px-3 py-2" placeholder="https://…/logo.png"></label>
+              <label class="block text-sm flex items-center gap-2 mt-6"><input type="checkbox" checked class="accent-[#2C6ECB]"><span>Hide LocalRankAI branding</span></label>
+            </div>
+            <button class="mt-4 btn btn-primary">Save Branding</button>
+          </div>
+          <div class="card p-6">
+            <div class="font-semibold mb-3">Generate Report (with Outcome Calculator)</div>
+            <label class="block text-sm"><span class="text-p-muted">Report Type</span>
+              <select id="reportType" class="mt-1 w-full border border-brand-border rounded-md px-2 py-2">
+                <option>Local SEO Overview</option><option>Keyword Rankings</option><option>Reviews Summary</option><option>Directory Health</option>
+              </select>
+            </label>
+            <label class="block text-sm mt-3"><span class="text-p-muted">Date Range</span>
+              <select id="reportRange" class="mt-1 w-full border border-brand-border rounded-md px-2 py-2">
+                <option>Last 7 days</option><option>Last 30 days</option><option>Last 90 days</option>
+              </select>
+            </label>
+            <div class="grid gap-4 lg:grid-cols-2 mt-3">
+              <label class="block text-sm flex items-center gap-2"><input id="includeOutcome" type="checkbox" checked class="accent-[#2C6ECB]"><span>Include Outcome Calculator</span></label>
+              <label class="block text-sm"><span class="text-p-muted">Recipients</span><input id="recipients" class="mt-1 w-full border border-brand-border rounded-md px-3 py-2" placeholder="teja@dmg.com.au, client@example.com"></label>
+            </div>
+            <div class="flex gap-2 mt-4">
+              <button onclick="previewReport()" class="btn btn-ghost">Preview</button>
+              <button onclick="genReport()" class="btn btn-primary">Generate PDF</button>
+            </div>
+          </div>
+        </div>
+        <div class="card p-6">
+          <div class="font-semibold mb-3">Recent Reports</div>
+          <div class="overflow-hidden rounded-lg border border-brand-border">
+            <table class="w-full text-sm">
+              <thead class="bg-brand-light text-[#1F5197]">
+                <tr>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Name</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Type</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Date</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Status</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Outcome</th>
+                  <th class="text-left font-semibold p-3 border-b border-brand-border">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="recentReports">
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">Weekly Local SEO Summary</td><td class="p-3 border-b border-brand-border">Overview</td><td class="p-3 border-b border-brand-border">2025-11-05</td><td class="p-3 border-b border-brand-border text-green-700">Ready</td><td class="p-3 border-b border-brand-border">+6% vis • +23 est. calls</td><td class="p-3 border-b border-brand-border"><button class="btn btn-ghost">Download</button></td>
+                </tr>
+                <tr class="hover:bg-brand-light/60">
+                  <td class="p-3 border-b border-brand-border">Keyword Rankings (Oct)</td><td class="p-3 border-b border-brand-border">Rankings</td><td class="p-3 border-b border-brand-border">2025-10-31</td><td class="p-3 border-b border-brand-border text-green-700">Ready</td><td class="p-3 border-b border-brand-border">+3% vis • +11 est. calls</td><td class="p-3 border-b border-brand-border"><button class="btn btn-ghost">Download</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section id="settings" class="tab polaris-page space-y-6">
+        <h2 class="text-lg font-semibold">Settings</h2>
+        <div class="grid gap-6 lg:grid-cols-2">
+          <div class="card p-6">
+            <div class="font-semibold mb-3">Business Profile</div>
+            <label class="block text-sm"><span class="text-p-muted">Business Name</span><input class="mt-1 w-full border border-brand-border rounded-md px-3 py-2" value="Royal Plumbing"></label>
+            <label class="block text-sm mt-3"><span class="text-p-muted">Website</span><input class="mt-1 w-full border border-brand-border rounded-md px-3 py-2" value="https://royalplumbing.example"></label>
+            <label class="block text-sm mt-3"><span class="text-p-muted">Timezone</span>
+              <select class="mt-1 w-full border border-brand-border rounded-md px-2 py-2"><option>Australia/Melbourne (AEST)</option><option>Australia/Sydney (AEST)</option></select>
+            </label>
+            <button class="mt-4 btn btn-primary">Save</button>
+          </div>
+          <div class="card p-6">
+            <div class="font-semibold mb-3">Notifications</div>
+            <div class="flex items-center justify-between border border-brand-border rounded-lg p-3 mb-2 transition hover:shadow-subtle">
+              <div>
+                <div class="font-semibold text-sm">Weekly Summary Email</div>
+                <div class="text-p-muted text-xs">Sends every Monday morning</div>
+              </div>
+              <input type="checkbox" checked class="accent-[#2C6ECB]">
+            </div>
+            <div class="flex items-center justify-between border border-brand-border rounded-lg p-3 mb-2 transition hover:shadow-subtle">
+              <div>
+                <div class="font-semibold text-sm">Ranking Drop Alerts</div>
+                <div class="text-p-muted text-xs">Immediate email if Δ ≤ −5</div>
+              </div>
+              <input type="checkbox" checked class="accent-[#2C6ECB]">
+            </div>
+            <div class="flex items-center justify-between border border-brand-border rounded-lg p-3 transition hover:shadow-subtle">
+              <div>
+                <div class="font-semibold text-sm">New Review Alerts</div>
+                <div class="text-p-muted text-xs">Daily digest at 8:00 AM</div>
+              </div>
+              <input type="checkbox" class="accent-[#2C6ECB]">
+            </div>
+          </div>
+        </div>
+
+        <div class="grid gap-6 lg:grid-cols-2">
+          <div class="card p-6">
+            <div class="font-semibold mb-3">Integrations</div>
+            <div class="flex items-center gap-3 border border-brand-border rounded-lg p-3 mb-2 transition hover:shadow-subtle">
+              <div class="w-6 h-6 rounded bg-[#4285F4]"></div>
+              <div class="flex-1">
+                <div class="font-semibold text-sm">Google Search Console</div>
+                <div class="text-p-muted text-xs">Pulls impressions, clicks, CTR</div>
+              </div>
+              <button class="btn btn-primary">Connect</button>
+            </div>
+            <div class="flex items-center gap-3 border border-brand-border rounded-lg p-3 mb-2 transition hover:shadow-subtle">
+              <div class="w-6 h-6 rounded bg-[#34A853]"></div>
+              <div class="flex-1">
+                <div class="font-semibold text-sm">Google Business Profile</div>
+                <div class="text-p-muted text-xs">Reviews, categories, photos</div>
+              </div>
+              <button class="btn btn-ghost">Disconnect</button>
+            </div>
+            <div class="flex items-center gap-3 border border-brand-border rounded-lg p-3 transition hover:shadow-subtle">
+              <div class="w-6 h-6 rounded bg-[#6b5b95]"></div>
+              <div class="flex-1">
+                <div class="font-semibold text-sm">DataForSEO</div>
+                <div class="text-p-muted text-xs">Keyword & rankings API</div>
+              </div>
+              <button class="btn btn-primary">Connect</button>
+            </div>
+          </div>
+          <div class="card p-6">
+            <div class="font-semibold mb-3">Plan & Billing</div>
+            <label class="block text-sm"><span class="text-p-muted">Current Plan</span><input class="mt-1 w-full border border-brand-border rounded-md px-3 py-2" value="Pro (AU$49/mo)" readonly></label>
+            <div class="flex gap-2 mt-4">
+              <button class="btn btn-ghost">Change Plan</button>
+              <button class="btn btn-primary">Open Billing Portal</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const links = document.querySelectorAll('.nav-link');
+      const pages = ['dashboard','keywords','insights','citations','reviews','tasks','reports','settings'];
+
+      function activate(target){
+        links.forEach(a => {
+          const active = a.getAttribute('data-target') === target;
+          a.classList.toggle('nav-active', active);
+        });
+        pages.forEach(id => {
+          const el = document.getElementById(id);
+          if(id === target){ el.classList.add('active'); }
+          else { el.classList.remove('active'); }
+        });
+        // Scroll reset to top (beneath sticky bars)
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      links.forEach(a => a.addEventListener('click', (e) => {
+        e.preventDefault();
+        activate(a.getAttribute('data-target'));
+      }));
+
+      // Default
+      activate('dashboard');
+
+      // KPI count-up
+      function animateCount(el, end, suffix=''){
+        const duration = 900; const start = 0;
+        const dec = (end % 1 !== 0) ? 1 : 0;
+        const t0 = performance.now();
+        function tick(t){
+          const p = Math.min((t - t0) / duration, 1);
+          const val = start + (end - start) * p;
+          el.textContent = (dec ? val.toFixed(1) : Math.round(val)) + suffix;
+          if(p<1) requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      }
+      document.querySelectorAll('.kpi').forEach(el => {
+        const end = parseFloat(el.getAttribute('data-kpi'));
+        const suffix = el.getAttribute('data-suffix') || '';
+        animateCount(el, end, suffix);
+      });
+
+      // GeoGrid demo
+      window.fakeRunGrid = () => {
+        const size = document.getElementById('gridSize').value;
+        const radius = document.getElementById('radiusKm').value;
+        const overlay = document.getElementById('overlayToggle').checked ? 'with competitors' : 'solo';
+        const el = document.getElementById('gridCanvas');
+        el.innerHTML = `<div class="w-3/4"><div class="h-32 rounded bg-gradient-to-r from-[#DCEFFD] to-[#EBF5FA] animate-[widthGrow_1s_ease-out_forwards]"></div><div class="mt-3 text-center text-xs text-[#64748B]">Rendered ${size} grid at ${radius}km ${overlay}</div></div>`;
+      };
+
+      // Predictive What-If demo
+      window.runPredict = () => {
+        const action = document.getElementById('whatIfAction').value;
+        const el = document.getElementById('predictChart');
+        const map = {
+          citation_fix: {uplift:'+7%', conf:'0.82'},
+          add_category: {uplift:'+4%', conf:'0.76'},
+          review_rate:  {uplift:'+3%', conf:'0.71'}
+        };
+        const r = map[action] || {uplift:'+2%', conf:'0.65'};
+        el.textContent = `Predicted visibility uplift: ${r.uplift} (confidence ${r.conf})`;
+        el.classList.remove('animate-[fadeSlideIn_.3s_cubic-bezier(0.32,0.72,0,1)_both]'); void el.offsetWidth;
+        el.classList.add('animate-[fadeSlideIn_.3s_cubic-bezier(0.32,0.72,0,1)_both]');
+      };
+
+      // Tasks helpers
+      window.createTask = (title) => {
+        const table = document.getElementById('taskTable');
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-brand-light/60';
+        row.innerHTML = `<td class="p-3 border-b border-brand-border">${title || 'Follow up on ranking improvement focus keyword'}</td>
+          <td class="p-3 border-b border-brand-border">Evidence from latest grid/insight</td>
+          <td class="p-3 border-b border-brand-border">Medium</td>
+          <td class="p-3 border-b border-brand-border">Low</td>
+          <td class="p-3 border-b border-brand-border">2025-11-15</td>
+          <td class="p-3 border-b border-brand-border">Open</td>
+          <td class="p-3 border-b border-brand-border"><button onclick="markDone(this)" class="btn btn-ghost">Complete</button></td>`;
+        table.prepend(row);
+        activate('tasks');
+      };
+      window.markDone = (btn) => { btn.closest('tr').children[5].textContent='Done'; btn.disabled=true; btn.textContent='Completed'; };
+      window.generateWeeklyTasks = () => { createTask('Publish suburb pages for top-5 suburbs'); createTask('Request 5 new Google reviews'); createTask('Fix duplicate on Hotfrog AU'); };
+      window.addTasks = (arr) => { arr.forEach(t => createTask(t)); };
+
+      // Reviews – Campaign composer
+      window.openCampaignModal = () => document.getElementById('campaignComposer').classList.remove('hidden');
+      window.cancelCampaign = () => document.getElementById('campaignComposer').classList.add('hidden');
+      window.saveCampaign = () => { cancelCampaign(); alert('Campaign saved & queued (demo)'); };
+
+      // Reports
+      window.previewReport = () => alert('Preview rendering (demo)');
+      window.genReport = () => {
+        const includeOutcome = document.getElementById('includeOutcome').checked;
+        const tbody = document.getElementById('recentReports');
+        const tr = document.createElement('tr'); tr.className = 'hover:bg-brand-light/60';
+        tr.innerHTML = `<td class="p-3 border-b border-brand-border">${document.getElementById('reportType').value} (${document.getElementById('reportRange').value})</td>
+          <td class="p-3 border-b border-brand-border">Custom</td><td class="p-3 border-b border-brand-border">2025-11-05</td>
+          <td class="p-3 border-b border-brand-border text-green-700">Ready</td>
+          <td class="p-3 border-b border-brand-border">${includeOutcome?'+5% vis • +17 est. calls':'—'}</td>
+          <td class="p-3 border-b border-brand-border"><button class="btn btn-ghost">Download</button></td>`;
+        tbody.prepend(tr);
+      };
+
+      // Failsafe for file:// context
+      setTimeout(() => {
+        if (location.protocol === 'file:') {
+          const links = document.querySelectorAll('.nav-link');
+          links.forEach(a => a.addEventListener('click', (e) => {
+            e.preventDefault();
+            activate(a.getAttribute('data-target'));
+          }));
+        }
+      }, 800);
+    });
+  </script>
+</body>
+</html>
