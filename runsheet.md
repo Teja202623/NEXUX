@@ -165,6 +165,24 @@ This document tracks the progress and key actions taken during the development o
     *   Created `apps/web/app/api/projects/[id]/route.js` to fetch a single project from Google Sheets.
 *   **Notes:** These API routes are used by the frontend to display and manage project data.
 
+### 13. Audit API Routes
+*   **Status:** Completed.
+*   **Actions:**
+    *   Created `apps/web/app/api/audit/citation/route.js` to trigger the citation audit.
+*   **Notes:** This API route is used by the frontend to initiate a citation audit.
+
+### 14. Predictive Modeling API Routes
+*   **Status:** Completed.
+*   **Actions:**
+    *   Created `apps/web/app/api/predictive-modeling/route.js` to trigger predictive modeling.
+*   **Notes:** This API route is used by the frontend to initiate predictive modeling.
+
+### 15. Review Campaign API Routes
+*   **Status:** Completed.
+*   **Actions:**
+    *   Created `apps/web/app/api/review-campaign/route.js` to create review campaigns.
+*   **Notes:** This API route is used by the frontend to create review campaigns.
+
 ---
 
 ## **IV. Frontend Development**
@@ -175,7 +193,8 @@ This document tracks the progress and key actions taken during the development o
     *   Created `apps/web/app/dashboard/page.tsx` with a basic Shopify Polaris layout.
     *   Includes placeholders for "Key Metrics", "Recent Insights", and "Pending Tasks".
     *   Basic authentication check using `useSession` from `next-auth/react`.
-*   **Notes:** This serves as the main entry point for authenticated users.
+    *   Now fetches and displays insights, smart tasks, and reports from the backend API routes.
+*   **Notes:** This serves as the main entry point for authenticated users, now with dynamic data.
 
 ### 2. Projects Page
 *   **Status:** Completed.
@@ -190,6 +209,30 @@ This document tracks the progress and key actions taken during the development o
 *   **Actions:**
     *   Created `apps/web/app/projects/[id]/page.tsx` with a basic Shopify Polaris layout.
     *   Initially used mock data, now fetches project details from `/api/projects/[id]`.
-*   **Notes:** This page shows the details for a single project and is connected to the backend.
+    *   Added a button to trigger a citation audit, which calls the `/api/audit/citation` endpoint.
+    *   Added a button to trigger predictive modeling, which calls the `/api/predictive-modeling` endpoint.
+    *   Added a button to create a review campaign, which calls the `/api/review-campaign` endpoint.
+*   **Notes:** This page shows the details for a single project and is connected to the backend, and now allows triggering citation audits, predictive modeling, and review campaigns.
+
+### 4. Insights Page
+*   **Status:** Completed.
+*   **Actions:**
+    *   Created `apps/web/app/insights/page.tsx` to display a list of all insights.
+    *   Fetches insights from `/api/insights`.
+*   **Notes:** This page provides a detailed view of all generated insights.
+
+### 5. Smart Tasks Page
+*   **Status:** Completed.
+*   **Actions:**
+    *   Created `apps/web/app/tasks/page.tsx` to display a list of all smart tasks.
+    *   Fetches smart tasks from `/api/smart-tasks`.
+*   **Notes:** This page allows users to manage their smart tasks.
+
+### 6. Reports Page
+*   **Status:** Completed.
+*   **Actions:**
+    *   Created `apps/web/app/reports/page.tsx` to display a list of all reports.
+    *   Fetches reports from `/api/reports`.
+*   **Notes:** This page provides access to historical performance reports.
 
 ---
