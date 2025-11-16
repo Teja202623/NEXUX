@@ -44,7 +44,9 @@ model CompetitorAd {
   competitor          Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
 
   scrapeCreatorsId    String
-  platform            String   // "facebook", "instagram", "linkedin"
+  platform            String   // "facebook", "instagram"
+  contentType         String   // "facebook_ad", "facebook_post", "instagram_post", "instagram_reel", "instagram_ad"
+  contentSource       String   // "ads_library", "page_feed", "profile_feed"
 
   headline            String?
   description         String?
@@ -56,6 +58,15 @@ model CompetitorAd {
   videoUrl            String?
   creativeType        String   // "image", "video", "carousel"
 
+  // Platform-specific IDs for deduplication
+  platformContentId   String?  // post ID, reel ID, or ad ID from API
+
+  // Engagement metrics (populated for organic content)
+  engagementMetrics   Json?    // { likes, comments, shares, saves, views }
+
+  // For reels specifically
+  videoDuration       Int?     // in seconds
+
   firstSeenAt         DateTime
   lastSeenAt          DateTime
 
@@ -66,11 +77,12 @@ model CompetitorAd {
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
-  scrapedAt           DateTime @default(now())
 
   @@unique([scrapeCreatorsId, platform, competitorId])
   @@index([competitorId])
   @@index([isAnalyzed])
+  @@index([contentType])
+  @@index([contentSource])
 }
 
 model AdAnalysis {
