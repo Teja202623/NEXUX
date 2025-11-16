@@ -1,0 +1,215 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================
+// COMPETITOR MODELS
+// ============================================
+
+model Competitor {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  website         String
+  domain          String   @unique
+  linkedinUrl     String?
+  facebookPageId  String?
+  instagramHandle String?
+  industry        String   @default("digital-marketing")
+  trades          String[]
+  status          String   @default("active")
+  lastScrapedAt   DateTime?
+
+  ads             CompetitorAd[]
+  analyses        AdAnalysis[]
+  activities      CompetitorActivity[]
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([lastScrapedAt])
+}
+
+model CompetitorAd {
+  id                  String   @id @default(cuid())
+  competitorId        String
+  competitor          Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  scrapeCreatorsId    String
+  platform            String   // "facebook", "instagram", "linkedin"
+
+  headline            String?
+  description         String?
+  primaryText         String?
+  callToAction        String?
+  destinationUrl      String?
+
+  imageUrl            String?
+  videoUrl            String?
+  creativeType        String   // "image", "video", "carousel"
+
+  firstSeenAt         DateTime
+  lastSeenAt          DateTime
+
+  rawData             Json
+  isAnalyzed          Boolean  @default(false)
+
+  analysis            AdAnalysis?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  scrapedAt           DateTime @default(now())
+
+  @@unique([scrapeCreatorsId, platform, competitorId])
+  @@index([competitorId])
+  @@index([isAnalyzed])
+}
+
+model AdAnalysis {
+  id                    String   @id @default(cuid())
+  adId                  String   @unique
+  ad                    CompetitorAd @relation(fields: [adId], references: [id], onDelete: Cascade)
+  competitorId          String
+  competitor            Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+
+  copyLength            Int
+  copyHooks             String[]
+  copySentiment         String
+  emotionalTriggers     String[]
+  keywords              String[]
+
+  creativeType          String
+  visualThemes          String[]
+
+  ctaType               String
+  ctaUrgency            String
+
+  contentThemes         String[]
+  industryTopics        String[]
+
+  performanceScore      Int
+  estimatedEngagement   String
+
+  keyTakeaways          String[]
+  reusableAngle         String?
+
+  confidence            Int
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([competitorId])
+}
+
+model ContentPattern {
+  id                    String   @id @default(cuid())
+  patternType           String
+  patternName           String
+  description           String
+  examples              String[]
+  occurrences           Int
+  lastSeen              DateTime
+  avgPerformanceScore   Int
+  recommendation        String
+  category              String
+  applicableIndustries  String[]
+
+  discoveredAt          DateTime @default(now())
+  lastUpdatedAt         DateTime @updatedAt
+
+  @@index([patternType])
+}
+
+model DailyInsight {
+  id                    String   @id @default(cuid())
+  date                  DateTime @unique
+  topPatterns           Json
+  newPatternsFound      Int
+  recommendedAngles     String[]
+  urgentTrends          String[]
+  newAdsDiscovered      Int
+  competitorsActive     Int
+  mostActiveCompetitors String[]
+  trendSummary          String
+  hotTopics             String[]
+  confidenceScore       Int
+  actionability         String
+  detailedAnalysis      Json
+
+  createdAt             DateTime @default(now())
+}
+
+model CompetitorActivity {
+  id              String   @id @default(cuid())
+  competitorId    String
+  competitor      Competitor @relation(fields: [competitorId], references: [id], onDelete: Cascade)
+  activityType    String
+  description     String
+  details         Json?
+  activityDate    DateTime
+
+  createdAt       DateTime @default(now())
+
+  @@index([competitorId])
+}
+
+// ============================================
+// LOGGING MODELS
+// ============================================
+
+model ScrapeLog {
+  id                  String   @id @default(cuid())
+  jobId               String
+  startTime           DateTime
+  endTime             DateTime
+  duration            Int
+  competitorsProcessed Int
+  adsFound            Int
+  adsStored           Int
+  newAdsInserted      Int
+  adsUpdated          Int
+  errorCount          Int @default(0)
+  errors              String[]
+  status              String
+  apiCallsUsed        Int
+
+  createdAt           DateTime @default(now())
+
+  @@index([jobId])
+}
+
+model AnalysisLog {
+  id              String   @id @default(cuid())
+  jobId           String
+  startTime       DateTime
+  endTime         DateTime
+  duration        Int
+  adsProcessed    Int
+  adsAnalyzed     Int
+  newPatternsFound Int
+  status          String
+  errors          String[]
+
+  createdAt       DateTime @default(now())
+}
+
+model InsightLog {
+  id              String   @id @default(cuid())
+  jobId           String
+  startTime       DateTime
+  endTime         DateTime
+  insightGenerated Boolean
+  topPatterns     Int
+  newAds          Int
+  status          String
+
+  createdAt       DateTime @default(now())
+}
