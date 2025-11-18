@@ -1,0 +1,9 @@
+GOOGLE_APPLICATION_CREDENTIALS.json
+node_modules
+localrankai-fresh/
+localrankai/
+apps/
+.DS_Store
+node_modules/
+*.log
+Marketing By Machine/
