@@ -1,0 +1,171 @@
+================================================================================
+                         WEEK 1: QUICK START CARD
+                         Print this & keep handy
+================================================================================
+
+🎯 WEEK 1 MISSION
+├─ Phase 1: Send 20-25 cold emails, make 5-8 calls, close 0-1 customers
+├─ Phase 2: Research 340 prospects, create CSV, ready for database seeding
+└─ Time: 20-25 hours (morning emails + evening research)
+
+================================================================================
+
+📋 TODAY'S ACTIONS (Next 2 hours)
+
+1. CREATE SPREADSHEET (30 mins)
+   ├─ Google Sheets: "Prospect Database - 340"
+   └─ Add 17 columns: name, trade, email, phone, website, google_rank,
+      review_count, rating, gridHealth, criticalGaps, highPriority,
+      defendingAreas, topCompetitor, competitorHealth, revenueImpact,
+      primarySuburb, suburbs
+
+2. SEND FIRST EMAILS (1-1.5 hours)
+   ├─ Read: PHASE-1-PERSONALIZED-EMAILS.md
+   ├─ Use: PHASE-1-EMAIL-TEMPLATES.md
+   ├─ Send: 5-10 emails using SendGrid
+   └─ Track: name, date sent, template used
+
+3. START RESEARCH (Rest of today)
+   ├─ Google Maps: "plumber werribee"
+   ├─ Extract: name, email, phone, reviews, rating
+   ├─ Run: Grid analysis for each (use your tool)
+   └─ Add to spreadsheet
+
+================================================================================
+
+⏰ DAILY ROUTINE (All Week)
+
+MORNING (1 hour)
+├─ 8:00-8:30am: Send 3-5 emails
+└─ 8:30-9:00am: Check replies, respond quickly
+
+LUNCH (30 mins)
+└─ 12:00-12:30pm: Check email again
+
+EVENING (4-5 hours)
+├─ 6:00-7:00pm: Make 1-2 discovery calls (if replies)
+└─ 7:00-11pm: Prospect research (3-4 hours)
+
+================================================================================
+
+📊 WEEK 1 TARGETS
+
+Phase 1 (Cold Email):
+├─ Monday-Friday: 20-25 emails sent
+├─ Expected: 1-2 replies
+├─ Calls made: 5-8
+└─ Closes: 0-1 (bonus if you get any!)
+
+Phase 2 (Prospect Research):
+├─ Monday-Tuesday: 120 plumbers (2-3 hours)
+├─ Wednesday-Thursday: 160 electricians + locksmiths (2-3 hours)
+├─ Friday: 60 HVAC + quality check (2 hours)
+├─ Total: 340 prospects
+└─ Output: CSV file ready for Week 2
+
+================================================================================
+
+📁 FILES YOU NEED THIS WEEK
+
+READ BEFORE EMAILING:
+├─ PHASE-1-PERSONALIZED-EMAILS.md (example email)
+└─ PHASE-1-EMAIL-TEMPLATES.md (3 templates to personalize)
+
+READ BEFORE CALLING:
+└─ PHASE-1-DISCOVERY-SCRIPT.md (word-for-word script)
+
+READ FOR RESEARCH:
+└─ WEEK-1-PROSPECT-RESEARCH.md (detailed instructions)
+
+DAILY REFERENCE:
+└─ WEEK-1-ACTION-CHECKLIST.md (step-by-step daily guide)
+
+================================================================================
+
+🚀 QUICK WINS
+
+✅ Database setup is DONE
+   └─ 5 new tables live in your PostgreSQL database
+
+✅ Email templates are written
+   └─ 3 proven templates ready to personalize
+
+✅ Call script is documented
+   └─ Word-for-word script + 6 objection handlers
+
+✅ Research guide is complete
+   └─ Step-by-step instructions for 340 prospects
+
+================================================================================
+
+⚠️ COMMON MISTAKES
+
+❌ Waiting for all replies before sending more emails
+   → Send consistently 3-5 per day regardless of replies
+
+❌ Trying to perfect every prospect record
+   → Speed > perfection. "Good enough" data is fine.
+
+❌ Letting Phase 1 emails distract from Phase 2 research
+   → Separate times: Morning = Phase 1, Evening = Phase 2
+
+❌ Getting discouraged by low reply rates
+   → 5-8% is NORMAL and GOOD. Keep sending.
+
+❌ Building the system too early
+   → Week 1-2 = research/setup. Week 3+ = coding.
+
+================================================================================
+
+💻 COMMANDS YOU NEED
+
+Database already set up. Just need to run these in Week 2:
+
+# Week 2: Seed prospects from CSV
+cd backend
+npm install csv-parser  # Install dependency once
+npx ts-node prisma/seed-prospects.ts
+
+# Week 2: Verify seeding worked
+npx prisma studio
+
+================================================================================
+
+📊 TRACKING SPREADSHEET EXAMPLE
+
+DATE | EMAILS_SENT | REPLIES | CALLS | PROSPECTS_DONE | NOTES
+Mon  |      5      |    0    |  0    |      50        | Good start!
+Tue  |      5      |    1    |  1    |     100        | First reply!
+Wed  |      5      |    1    |  1    |     150        | On track
+Thu  |      5      |    0    |  1    |     200        | Slow day
+Fri  |      5      |    1    |  2    |     340        | Done! 🎉
+---  |     25      |    3    |  5    |     340        | WEEK 1 SUCCESS
+
+================================================================================
+
+🎬 GO TIME
+
+Right now:
+1. Open Google Sheets
+2. Create "Prospect Database - 340"
+3. Add column headers
+4. Open SendGrid
+5. Customize 5-10 emails
+6. Hit send
+7. Start researching plumbers
+
+That's it. You're launched.
+
+================================================================================
+
+Need help? All documentation is in Marketing By Machine folder.
+- Can't remember email approach? → PHASE-1-EMAIL-TEMPLATES.md
+- Stuck on calls? → PHASE-1-DISCOVERY-SCRIPT.md
+- Research confusing? → WEEK-1-PROSPECT-RESEARCH.md
+- Lost on daily plan? → WEEK-1-ACTION-CHECKLIST.md
+- Big picture? → WEEK-1-SUMMARY.md or PARALLEL-EXECUTION-ROADMAP.md
+
+================================================================================
+                            LET'S GO 🚀
+                        You've got this. Execute.
+================================================================================
