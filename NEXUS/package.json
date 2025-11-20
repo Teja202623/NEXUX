@@ -22,6 +22,7 @@
     "prisma:generate": "prisma generate",
     "scraper:manual": "ts-node scripts/sync.ts",
     "scraper:test": "ts-node src/test-real-data.ts",
+    "refresh-tokens": "ts-node scripts/refresh-meta-tokens.ts",
     "insights:generate": "ts-node scripts/insights.ts",
     "lint": "eslint src --ext .ts"
   },

@@ -1,8 +1,8 @@
 import { Competitor, Prisma } from '@prisma/client';
 import crypto from 'crypto';
-import { db } from '@/config/database';
-import { apiClient } from '@/utils/apiClient';
-import { logger } from '@/utils/logger';
+import db from '../config/database';
+import { createApiClient } from '../utils/apiClient';
+import logger from '../utils/logger';
 import {
   FacebookAdContent,
   FacebookPostContent,
@@ -11,9 +11,12 @@ import {
   InstagramAdContent,
   ScrapeResult,
   CompetitorScrapeResult,
-} from '@/types/scrapeCreators.types';
+} from '../types/scrapeCreators.types';
 
 export class ScraperService {
+  // Facebook Graph API client
+  private readonly facebookApiClient = createApiClient('https://graph.facebook.com/v18.0');
+
   /**
    * Main entry point - scrapes all active competitors across all platforms
    */
@@ -279,21 +282,19 @@ export class ScraperService {
       const searchQuery = competitor.domain || competitor.facebookPageId;
 
       // Call Meta Ad Library API
-      const response = await apiClient.get('/ads/library/search', {
-        params: {
-          access_token: process.env.FACEBOOK_AD_LIBRARY_TOKEN,
-          search_type: 'PAGE',
-          fields:
-            'id,name,adset_spec,created_time,updated_time,creative_spec,ad_snapshot_url',
-          search_terms: searchQuery,
-          limit: 100,
-        },
+      const response = await this.facebookApiClient.get<any>('/ads/library/search', {
+        access_token: process.env.FACEBOOK_AD_LIBRARY_TOKEN,
+        search_type: 'PAGE',
+        fields:
+          'id,name,adset_spec,created_time,updated_time,creative_spec,ad_snapshot_url',
+        search_terms: searchQuery,
+        limit: 100,
       });
 
       apiCalls++;
 
-      if (response.data?.data) {
-        for (const ad of response.data.data) {
+      if (response?.data) {
+        for (const ad of response.data) {
           content.push({
             adId: ad.id,
             headline: ad.creative_spec?.[0]?.headline,
@@ -339,23 +340,21 @@ export class ScraperService {
       }
 
       // Fetch posts from Facebook Graph API
-      const response = await apiClient.get(
+      const response = await this.facebookApiClient.get<any>(
         `/${competitor.facebookPageId}/posts`,
         {
-          params: {
-            access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
-            fields:
-              'id,message,type,created_time,permalink_url,picture,attachments,story,shares,likes.summary(true)',
-            limit: 50,
-            date_format: 'U',
-          },
+          access_token: process.env.FACEBOOK_PAGE_ACCESS_TOKEN,
+          fields:
+            'id,message,type,created_time,permalink_url,picture,attachments,story,shares,likes.summary(true),comments.summary(true)',
+          limit: 50,
+          date_format: 'U',
         }
       );
 
       apiCalls++;
 
-      if (response.data?.data) {
-        for (const post of response.data.data) {
+      if (response?.data) {
+        for (const post of response.data) {
           const imageUrls: string[] = [];
           if (post.picture) imageUrls.push(post.picture);
           if (post.attachments?.data?.[0]?.media?.image?.src) {
@@ -406,21 +405,19 @@ export class ScraperService {
       }
 
       // Call Meta Ad Library API for Instagram
-      const response = await apiClient.get('/ads/library/search', {
-        params: {
-          access_token: process.env.FACEBOOK_AD_LIBRARY_TOKEN,
-          search_type: 'INSTAGRAM_BUSINESS',
-          fields:
-            'id,name,adset_spec,created_time,updated_time,creative_spec,ad_snapshot_url',
-          search_terms: competitor.instagramHandle.replace('@', ''),
-          limit: 100,
-        },
+      const response = await this.facebookApiClient.get<any>('/ads/library/search', {
+        access_token: process.env.FACEBOOK_AD_LIBRARY_TOKEN,
+        search_type: 'INSTAGRAM_BUSINESS',
+        fields:
+          'id,name,adset_spec,created_time,updated_time,creative_spec,ad_snapshot_url',
+        search_terms: competitor.instagramHandle.replace('@', ''),
+        limit: 100,
       });
 
       apiCalls++;
 
-      if (response.data?.data) {
-        for (const ad of response.data.data) {
+      if (response?.data) {
+        for (const ad of response.data) {
           const creativeUrls: string[] = [];
           if (ad.creative_spec?.[0]?.image_url) {
             creativeUrls.push(ad.creative_spec[0].image_url);
@@ -473,36 +470,32 @@ export class ScraperService {
       }
 
       // Get Instagram user ID from handle
-      const userResponse = await apiClient.get('/ig_user_search', {
-        params: {
-          user_name: competitor.instagramHandle.replace('@', ''),
-          access_token: process.env.INSTAGRAM_ACCESS_TOKEN,
-        },
+      const userResponse = await this.facebookApiClient.get<any>('/ig_user_search', {
+        user_name: competitor.instagramHandle.replace('@', ''),
+        access_token: process.env.INSTAGRAM_ACCESS_TOKEN,
       });
 
       apiCalls++;
 
-      if (!userResponse.data?.data?.[0]?.id) {
+      if (!userResponse?.data?.[0]?.id) {
         logger.warn(`Could not find Instagram user for ${competitor.instagramHandle}`);
         return { content: [], apiCalls: 0 };
       }
 
-      const userId = userResponse.data.data[0].id;
+      const userId = userResponse.data[0].id;
 
       // Fetch posts from Instagram Graph API
-      const postsResponse = await apiClient.get(`/${userId}/ig_hashtag_search`, {
-        params: {
-          user_id: userId,
-          fields: 'id,caption,media_type,media_url,timestamp,like_count,comments_count,media_product_type',
-          access_token: process.env.INSTAGRAM_ACCESS_TOKEN,
-          limit: 50,
-        },
+      const postsResponse = await this.facebookApiClient.get<any>(`/${userId}/media`, {
+        user_id: userId,
+        fields: 'id,caption,media_type,media_url,timestamp,like_count,comments_count,media_product_type',
+        access_token: process.env.INSTAGRAM_ACCESS_TOKEN,
+        limit: 50,
       });
 
       apiCalls++;
 
-      if (postsResponse.data?.data) {
-        for (const post of postsResponse.data.data) {
+      if (postsResponse?.data) {
+        for (const post of postsResponse.data) {
           if (post.media_type === 'VIDEO' || post.media_type === 'REELS') {
             continue; // Skip videos/reels, they're handled separately
           }
@@ -557,45 +550,36 @@ export class ScraperService {
       }
 
       // Get Instagram user ID from handle
-      const userResponse = await apiClient.get('/ig_user_search', {
-        params: {
-          user_name: competitor.instagramHandle.replace('@', ''),
-          access_token: process.env.INSTAGRAM_ACCESS_TOKEN,
-        },
+      const userResponse = await this.facebookApiClient.get<any>('/ig_user_search', {
+        user_name: competitor.instagramHandle.replace('@', ''),
+        access_token: process.env.INSTAGRAM_ACCESS_TOKEN,
       });
 
       apiCalls++;
 
-      if (!userResponse.data?.data?.[0]?.id) {
+      if (!userResponse?.data?.[0]?.id) {
         logger.warn(`Could not find Instagram user for ${competitor.instagramHandle}`);
         return { content: [], apiCalls: 0 };
       }
 
-      const userId = userResponse.data.data[0].id;
+      const userId = userResponse.data[0].id;
 
       // Fetch reels from Instagram Graph API
-      const reelsResponse = await apiClient.get(`/${userId}/ig_user`, {
-        params: {
-          fields: 'ig_reel_ids',
-          access_token: process.env.INSTAGRAM_ACCESS_TOKEN,
-        },
+      const reelsResponse = await this.facebookApiClient.get<any>(`/${userId}`, {
+        fields: 'media.limit(25){media_type,media_url,caption,timestamp,like_count,comments_count,video_duration}',
+        access_token: process.env.INSTAGRAM_ACCESS_TOKEN,
       });
 
       apiCalls++;
 
-      if (reelsResponse.data?.ig_reel_ids) {
-        for (const reelId of reelsResponse.data.ig_reel_ids) {
+      if (reelsResponse?.media?.data) {
+        for (const media of reelsResponse.media.data) {
           try {
-            const reelDetails = await apiClient.get(`/${reelId}`, {
-              params: {
-                fields: 'id,caption,media_type,media_url,timestamp,like_count,comments_count,video_duration',
-                access_token: process.env.INSTAGRAM_ACCESS_TOKEN,
-              },
-            });
+            if (media.media_type !== 'VIDEO' && media.media_type !== 'REELS') {
+              continue; // Skip non-video content
+            }
 
-            apiCalls++;
-
-            const reel = reelDetails.data;
+            const reel = media;
 
             content.push({
               reelId: reel.id,
@@ -614,7 +598,7 @@ export class ScraperService {
               },
             });
           } catch (error) {
-            logger.warn(`Could not fetch reel details for ${reelId}`, { error });
+            logger.warn(`Could not process reel for ${competitor.instagramHandle}`, { error });
           }
         }
       }
@@ -662,15 +646,16 @@ export class ScraperService {
       if (contentType === 'facebook_ad' || contentType === 'instagram_ad') {
         // For ads, use hash of copy + CTA
         const adItem = item as FacebookAdContent | InstagramAdContent;
-        const copyText = [adItem.headline, adItem.adCopy || adItem.description]
+        const adCopy = 'adCopy' in adItem ? adItem.adCopy : ('description' in adItem ? adItem.description : '');
+        const copyText = [adItem.headline, adCopy]
           .filter(Boolean)
           .join(' | ');
-        platformContentId = this.hashContent(copyText + adItem.callToAction);
+        platformContentId = this.hashContent(copyText + (adItem.callToAction || ''));
 
         // Check if this ad hash already exists
         const existing = await db.competitorAd.findUnique({
           where: {
-            scrapeCreators_id_platform_competitorId: {
+            scrapeCreatorsId_platform_competitorId: {
               scrapeCreatorsId: platformContentId,
               platform: contentType.includes('instagram') ? 'instagram' : 'facebook',
               competitorId,
@@ -703,7 +688,7 @@ export class ScraperService {
         // Check if this content ID already exists
         const existing = await db.competitorAd.findUnique({
           where: {
-            scrapeCreators_id_platform_competitorId: {
+            scrapeCreatorsId_platform_competitorId: {
               scrapeCreatorsId: platformContentId || '',
               platform: contentType.includes('instagram') ? 'instagram' : 'facebook',
               competitorId,
@@ -712,16 +697,13 @@ export class ScraperService {
         });
 
         if (existing) {
-          // Update lastSeenAt and engagement metrics if applicable
+          // Update lastSeenAt and engagement metrics for organic content
           await db.competitorAd.update({
             where: { id: existing.id },
             data: {
               lastSeenAt: new Date(),
-              engagementMetrics:
-                contentType !== 'facebook_ad' && contentType !== 'instagram_ad'
-                  ? (item as FacebookPostContent | InstagramPostContent | InstagramReelContent)
-                      .engagementMetrics
-                  : undefined,
+              engagementMetrics: (item as FacebookPostContent | InstagramPostContent | InstagramReelContent)
+                .engagementMetrics as Prisma.InputJsonValue,
             },
           });
           isDuplicate = true;
@@ -757,9 +739,9 @@ export class ScraperService {
 
     for (const item of content) {
       try {
-        let contentType: string;
-        let platform: string;
-        let contentSource: string;
+        let contentType: string = '';
+        let platform: string = '';
+        let contentSource: string = '';
         let platformContentId: string = '';
         let headline: string | undefined;
         let description: string | undefined;
@@ -775,23 +757,26 @@ export class ScraperService {
         // Map content based on type
         if ('adId' in item && 'platforms' in item) {
           // Ad content (Facebook or Instagram)
-          contentType = item.platforms?.includes('instagram')
+          const adItem = item as FacebookAdContent | InstagramAdContent;
+          const adCopy = 'adCopy' in adItem ? adItem.adCopy : ('description' in adItem ? adItem.description : '');
+
+          contentType = adItem.platforms?.includes('instagram')
             ? 'instagram_ad'
             : 'facebook_ad';
-          platform = item.platforms?.includes('instagram') ? 'instagram' : 'facebook';
+          platform = adItem.platforms?.includes('instagram') ? 'instagram' : 'facebook';
           contentSource = 'ads_library';
           platformContentId = this.hashContent(
-            [item.headline, item.adCopy || item.description]
+            [adItem.headline, adCopy]
               .filter(Boolean)
-              .join(' | ') + item.callToAction
+              .join(' | ') + (adItem.callToAction || '')
           );
-          headline = item.headline;
-          description = item.adCopy || item.description;
-          callToAction = item.callToAction;
-          destinationUrl = item.landingUrl;
-          imageUrl = item.imageUrls?.[0];
-          videoUrl = item.videoUrl;
-          if (item.creativeUrls?.length) {
+          headline = adItem.headline;
+          description = adCopy;
+          callToAction = adItem.callToAction;
+          destinationUrl = adItem.landingUrl;
+          imageUrl = 'imageUrls' in adItem ? adItem.imageUrls?.[0] : undefined;
+          videoUrl = 'videoUrl' in adItem ? adItem.videoUrl : undefined;
+          if ('creativeUrls' in adItem && adItem.creativeUrls?.length) {
             creativeType = 'carousel';
           }
         } else if ('postId' in item && 'pageId' in item) {
@@ -815,15 +800,16 @@ export class ScraperService {
           engagementMetrics = item.engagementMetrics;
         } else if ('reelId' in item) {
           // Instagram reel
+          const reelItem = item as InstagramReelContent;
           contentType = 'instagram_reel';
           platform = 'instagram';
           contentSource = 'profile_feed';
-          platformContentId = item.reelId;
-          primaryText = item.caption;
-          videoUrl = item.videoUrl;
+          platformContentId = reelItem.reelId;
+          primaryText = reelItem.caption;
+          videoUrl = reelItem.videoUrl;
           creativeType = 'video';
-          engagementMetrics = item.engagementMetrics;
-          videoDuration = item.duration;
+          engagementMetrics = reelItem.engagementMetrics;
+          videoDuration = reelItem.duration;
         }
 
         // Store in database
@@ -843,11 +829,11 @@ export class ScraperService {
             imageUrl,
             videoUrl,
             creativeType,
-            engagementMetrics,
+            engagementMetrics: engagementMetrics as Prisma.InputJsonValue,
             videoDuration,
             firstSeenAt: new Date(),
             lastSeenAt: new Date(),
-            rawData: item as Prisma.InputJsonValue,
+            rawData: item as unknown as Prisma.InputJsonValue,
           },
         });
 

@@ -7,9 +7,8 @@
  * Usage: ts-node src/test-real-data.ts
  */
 
-import { ScraperService } from '@/services/scraper.service';
-import { db } from '@/config/database';
-import { logger } from '@/utils/logger';
+import { ScraperService } from './services/scraper.service';
+import db from './config/database';
 import * as dotenv from 'dotenv';
 
 // Load environment variables

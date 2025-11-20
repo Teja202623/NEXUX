@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from 'axios';
-import env from '@/config/env';
+import env from '../config/env';
 import logger from './logger';
 
 /**
